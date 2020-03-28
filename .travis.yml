@@ -1,0 +1,46 @@
+language: go
+
+go:
+  - 1.14
+
+before_install:
+  - sudo apt-get update -qq
+
+before_deploy:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y dos2unix
+  - GOARCH=arm GOOS=linux   go build -o cos_blog_sync-linux-arm
+  - GOARCH=386 GOOS=linux   go build -o cos_blog_sync-linux-386
+  - GOARCH=386 GOOS=darwin  go build -o cos_blog_sync-darwin-386
+  - GOARCH=386 GOOS=windows go build -o cos_blog_sync-windows-386.exe
+  - GOARCH=amd64 GOOS=linux   go build -o cos_blog_sync-linux-amd64
+  - GOARCH=amd64 GOOS=darwin  go build -o cos_blog_sync-darwin-amd64
+  - GOARCH=amd64 GOOS=windows go build -o cos_blog_sync-windows-amd64.exe
+
+  - zip -r cos_blog_sync-linux-arm.zip cos_blog_sync-linux-arm
+  - zip -r cos_blog_sync-linux-386.zip cos_blog_sync-linux-386
+  - zip -r cos_blog_sync-darwin-386.zip cos_blog_sync-darwin-386
+  - zip -r cos_blog_sync-linux-amd64.zip cos_blog_sync-linux-amd64
+  - zip -r cos_blog_sync-darwin-amd64.zip cos_blog_sync-darwin-amd64
+  - zip -r cos_blog_sync-windows-386.zip cos_blog_sync-windows-386.exe
+  - zip -r cos_blog_sync-windows-amd64.zip cos_blog_sync-windows-amd64.exe
+  # - cp cos_blog_sync-windows-amd64.exe cos_blog_sync.exe
+  # - rm cos_blog_sync.exe
+  # - cp cos_blog_sync-windows-386.exe cos_blog_sync.exe
+
+deploy:
+  provider: releases
+  api_key: $CI_USER_TOKEN_GOPHER
+  skip_cleanup: true
+  file:
+    - cos_blog_sync-linux-arm.zip
+    - cos_blog_sync-linux-386.zip
+    - cos_blog_sync-darwin-386.zip
+    - cos_blog_sync-windows-386.zip
+    - cos_blog_sync-linux-amd64.zip
+    - cos_blog_sync-darwin-amd64.zip
+    - cos_blog_sync-windows-amd64.zip
+  on:
+    tags: true
+    all_branches: true
+    go: 1.14
