@@ -72,23 +72,23 @@ func file_processor(dir string, exclude_dirs []string, files_ch chan map[string]
             return nil
         }
 
-        var target_dir_str string
+        var path_tmp []string
 
         if (strings.Contains(path, "\\")) {
-            path_tmp := strings.Split(path, "\\")
-            target_dir_str = path_tmp[len(path_tmp) - 2]
+            path_tmp = strings.Split(path, "\\")
         } else if (strings.Contains(path, "/")) {
-            path_tmp := strings.Split(path, "/")
-            target_dir_str = path_tmp[len(path_tmp) - 2]
+            path_tmp = strings.Split(path, "/")
         } else {
             fmt.Println("Error: not support path!")
             return nil
         }
 
-        for v := range(exclude_dirs) {
-            if (target_dir_str == exclude_dirs[v]) {
-                fmt.Printf("exclude dir: %s\n", exclude_dirs[v])
-                return nil
+        for _, v := range(exclude_dirs) {
+            for _, value := range(path_tmp) {
+                if (value == v) {
+                    fmt.Printf("exclude path: %s\n",path)
+                    return nil
+                }
             }
         }
 
@@ -238,8 +238,13 @@ func cos_main(new_files map[string]string, rm_files map[string]string, changed_f
     client = cos_prepare(default_bucket_name, default_secretid, default_secretkey)
 
     for key := range new_files {
-        fmt.Println(new_repo_dir + "\\" + key)
-        cos_upload(client, key, new_repo_dir + "\\" + key)
+        fmt.Println(new_repo_dir + "/" + key)
+        cos_upload(client, key, new_repo_dir + "/" + key)
+    }
+
+    for key := range changed_files {
+        fmt.Println(new_repo_dir + "/" + key)
+        cos_upload(client, key, new_repo_dir + "/" + key)
     }
 
     var rm_file_list []string
@@ -270,10 +275,7 @@ func main() {
     var old_repo_ch = make(chan map[string]string)
     var new_repo_ch = make(chan map[string]string)
 
-    var exclude_dirs []string = make([]string, 10)
-    exclude_dirs[0] = ".git"
-    exclude_dirs[1] = ".github"
-    exclude_dirs[2] = ".gitee"
+    exclude_dirs := []string {".git", ".github", ".gitee"}
 
     go file_processor(old_repo_dir, exclude_dirs, old_repo_ch)
     go file_processor(new_repo_dir, exclude_dirs, new_repo_ch)
